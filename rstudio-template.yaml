@@ -116,6 +116,8 @@ objects:
       description: Defines how to build the application
       template.alpha.openshift.io/wait-for-ready: "true"
   spec:
+    imagePullSecrets:
+      - name: redhat-registry-pull-secret
     source:
       dockerfile: "FROM registry.redhat.io/ubi7/python-36:latest"
     strategy:
