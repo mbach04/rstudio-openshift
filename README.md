@@ -25,7 +25,7 @@ Download the oc client for openshift and rstudio-template.yaml from GitHub.
 * *oc new-project "project-name"*
 
 Process and apply template using default values from template and passing you application specific parameters
-* *oc process -f rstudio-template.yaml -p NAME="application-name" -p USERNAME="your-username" -p PASSWORD="your-password" | oc apply -f -*
+* *oc process -f rstudio-template.yaml -p NAME="r" -p USERNAME="mbach" -p PASSWORD="password" -p APPLICATION_DOMAIN_SUFFIX="app-crc.testing" | oc apply -f -*
 
 ### Deleting application and project
 
