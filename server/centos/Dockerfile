@@ -1,4 +1,14 @@
-FROM quay.io/mbach/r-base:centos7
+#FROM quay.io/mbach/r-base:centos7
+
+FROM centos:centos7
+
+# podman build -t r-base:centos7 -f Dockerfile.centos7 .
+
+RUN yum install -y epel-release wget git\
+  && yum update -y \
+  && yum -y install R \
+  && yum clean all \
+  && rm -rf /var/cache/yum
 
 # podman build -t rstudio:centos7 -f Dockerfile.centos7 .
 
