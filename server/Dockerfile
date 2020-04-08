@@ -1,79 +1,45 @@
-# Upstream Dockerfile https://github.com/rocker-org/rocker-versioned/blob/master/tidyverse/3.4.4/Dockerfile
-FROM rocker/tidyverse:3.4.4
+FROM quay.io/rocker/r-ver:rhel7-3.6.0
 
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    nano=2.7.4-1 \
-    libcurl4-openssl-dev \
-    openssh-client \
-    less=481-2.1 \
-    htop=2.0.2-1 \
-    procps=2:3.3.12-3+deb9u1 \
-    net-tools=1.60+git20161116.90da8a0-1 \
-    rsync=3.1.2-1+deb9u1 \
-    gdebi-core=0.9.5.7+nmu1 \
-    libxt-dev=1:1.1.5-1 \
-    man-db=2.7.6.1-2 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV RSTUDIO_VERSION=${RSTUDIO_VERSION:-1.1.463}
+ENV S6_VERSION=${S6_VERSION:-v1.21.7.0}
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+ENV PATH=/usr/lib/rstudio-server/bin:$PATH
+ENV PANDOC_TEMPLATES_VERSION=${PANDOC_TEMPLATES_VERSION:-2.6}
 
-# Setup various variables
-ENV TZ="Europe/Helsinki" \
-    HOME="/mnt/${NAME}-pvc" \
-    TINI_VERSION=v0.18.0 \
-    APP_UID=999 \
-    APP_GID=999 \
-    PKG_R_VERSION=3.4.4 \
-    PKG_RSTUDIO_VERSION=1.1.447 \
-    PKG_SHINY_VERSION=1.5.7.907
+## Download and install RStudio server & dependencies
+RUN yum -y install wget git \
+  && wget https://download2.rstudio.org/rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
+  && yum -y install rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
+  && rm -f rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
+  && yum clean all \
+  && rm -rf /var/cache/yum \
+  && mkdir /home/rstudio-server \
+  && chown 'rstudio-server:rstudio-server' /home/rstudio-server \
+  && echo 'auth-minimum-user-id=0' >> /etc/rstudio/rserver.conf \
+#   && echo "rstudio-server:$PASSWORD" | chpasswd \
+  ## Symlink pandoc & standard pandoc templates for use system-wide
+  && ln -s /usr/lib/rstudio-server/bin/pandoc/pandoc /usr/local/bin \
+  && ln -s /usr/lib/rstudio-server/bin/pandoc/pandoc-citeproc /usr/local/bin \
+  && git clone --recursive --branch ${PANDOC_TEMPLATES_VERSION} https://github.com/jgm/pandoc-templates \
+  && mkdir -p /opt/pandoc/templates \
+  && cp -r pandoc-templates*/* /opt/pandoc/templates && rm -rf pandoc-templates* \
+  && mkdir /root/.pandoc && ln -s /opt/pandoc/templates /root/.pandoc/templates \
+  ## use more robust file locking to avoid errors when using shared volumes:
+  && echo 'lock-type=advisory' >> /etc/rstudio/file-locks \
+  ## configure git not to request password each time
+  && git config --system credential.helper 'cache --timeout=3600' \
+  && git config --system push.default simple
+  
 
-# Setup Tini, as S6 does not work when run as non-root users
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /sbin/tini
-RUN chmod +x /sbin/tini
+#COPY userconf.sh /etc/cont-init.d/userconf
 
-# Setup Shiny
-ADD https://download3.rstudio.org/ubuntu-14.04/x86_64/shiny-server-${PKG_SHINY_VERSION}-amd64.deb /tmp/shiny.deb
-RUN gdebi -n /tmp/shiny.deb && \
-    rm /tmp/shiny.deb && \
-    install2.r -e shiny rmarkdown shinythemes shinydashboard && \
-    cp -R /usr/local/lib/R/site-library/shiny/examples/* /srv/shiny-server/ && \
-    mkdir -p /var/log/shiny-server && \
-    chown rstudio.rstudio /var/log/shiny-server && \
-    chmod go+w -R /var/log/shiny-server /usr/local/lib/R /srv /var/lib/shiny-server
+## running with "-e ADD=shiny" adds shiny server
+#COPY add_shiny.sh /etc/cont-init.d/add
+#COPY disable_auth_rserver.conf /etc/rstudio/disable_auth_rserver.conf
+#COPY pam-helper.sh /usr/lib/rstudio-server/bin/pam-helper
 
-
-COPY rserver.conf rsession.conf /etc/rstudio/
-COPY start.sh /usr/local/bin/start.sh
-COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
-COPY .Renviron $HOME/.Renviron
-
-#OpenShift additions
-RUN if [ "$USERNAME" != "rstudio" ] ; then useradd -m $USERNAME ; fi
-
-RUN chmod a+x /usr/local/bin/start.sh
-
-RUN chmod go+w -R $HOME && \
-    usermod -u 988 rstudio-server && \
-    groupmod -g 988 rstudio-server && \
-    usermod -u "$APP_UID" "$USERNAME" && \
-    groupmod -g "$APP_GID" "$USERNAME" && \
-    chmod -R go+w /tmp/downloaded_packages /etc/rstudio/rsession.conf
-
-RUN chgrp root -R /usr/local/lib/R/site-library
-
-COPY fix.sh /usr/local/bin/fix.sh
-RUN chmod ug+rw /etc/passwd
-RUN chmod ug+rw /etc/group
-
-RUN chgrp root /etc/shadow
-
-RUN chmod ug+rw /etc/shadow
-
-RUN chgrp root /usr/local/bin/fix.sh \
-    && chmod 774 /usr/local/bin/fix.sh
+EXPOSE 8787
 
 
-USER $APP_UID:$APP_GID
-WORKDIR $HOME
-EXPOSE 8787 3838
-#MAINTAINER
-ENTRYPOINT ["/sbin/tini", "-g", "--"]
-CMD ["/usr/local/bin/start.sh"]
+#CMD ["/init"]
+CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-daemonize=0", "--www-port=8787"]
