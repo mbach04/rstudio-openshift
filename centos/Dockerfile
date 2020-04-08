@@ -51,6 +51,6 @@ RUN yum install -y git wget \
 EXPOSE 8787
 
 
-ENTRYPOINT ["/usr/bin/start_studio"]
+#ENTRYPOINT ["/usr/bin/start_studio"]
 CMD ["/usr/lib/rstudio-server/bin/rserver","--server-daemonize=0","--www-port=8787"]  
 USER 10001
