@@ -114,7 +114,7 @@ objects:
       git:
         uri: https://github.com/mbach04/rstudio-openshift.git
         ref: master
-      contextDir: server/centos
+      contextDir: centos
     strategy:
       dockerStrategy:
         env:
