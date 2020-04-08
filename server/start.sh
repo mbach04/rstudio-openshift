@@ -10,7 +10,7 @@ echo "Starting RSudio Server"
 echo "session-default-working-dir=$HOME" >> /etc/rstudio/rsession.conf
 
 if [ ! -e "$HOME/.Renviron" ]; then
-	echo -e "HOME=$HOME\nUSER=$USERNAME\nTZ=Europe/Helsinki" > "$HOME/.Renviron"
+	echo -e "HOME=$HOME\nUSER=$USERNAME\nTZ=America/New_York" > "$HOME/.Renviron"
 fi
 
 /usr/lib/rstudio-server/bin/rserver --server-daemonize 0 --auth-none 0 &
