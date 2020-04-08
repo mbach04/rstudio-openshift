@@ -4,7 +4,7 @@ FROM centos:centos7
 
 # podman build -t r-base:centos7 -f Dockerfile.centos7 .
 
-RUN yum install -y epel-release wget git\
+RUN yum install -y epel-release \
   && yum update -y \
   && yum -y install R \
   && yum clean all \
@@ -24,7 +24,8 @@ ENV USER_NAME=rstudio-server
 
 COPY start_studio /usr/bin/start_studio
 
-RUN wget https://download2.rstudio.org/server/centos6/x86_64/rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
+RUN yum install -y git wget \
+  && wget https://download2.rstudio.org/server/centos6/x86_64/rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
   && yum -y install rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
   && rm -f rstudio-server-rhel-${RSTUDIO_VERSION}-x86_64.rpm \
   && yum clean all \
