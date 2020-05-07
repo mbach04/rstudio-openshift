@@ -47,7 +47,7 @@ COPY .Renviron $HOME/.Renviron
 
 #OpenShift additions
 #RUN if [ "$USERNAME" != "rstudio" ] ; then useradd -m $USERNAME ; fi
-RUN useradd -m rstudio
+#RUN useradd -m rstudio # already exists
 
 RUN chmod a+x /usr/local/bin/start.sh
 
