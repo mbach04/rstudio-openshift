@@ -10,7 +10,7 @@ metadata:
     description: 
     iconClass: fa fa-bar-chart
     openshift.io/display-name: RStudio
-    openshift.io/documentation-url: https://github.com/CSCfi/rstudio-openshift
+    openshift.io/documentation-url: https://github.com/mbach04/rstudio-openshift
     openshift.io/support-url: https://www.csc.fi/contact-info
     openshift.io/long-description: 
     openshift.io/provider-display-name: CSC
@@ -141,8 +141,8 @@ objects:
     source:
       type: Git
       git:
-        uri: https://github.com/CSCfi/rstudio-openshift.git
-        ref: dev
+        uri: https://github.com/mbach04/rstudio-openshift.git
+        ref: master
       contextDir: server
     strategy:
       dockerStrategy:
