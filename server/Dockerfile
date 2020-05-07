@@ -46,7 +46,8 @@ COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 COPY .Renviron $HOME/.Renviron
 
 #OpenShift additions
-RUN if [ "$USERNAME" != "rstudio" ] ; then useradd -m $USERNAME ; fi
+#RUN if [ "$USERNAME" != "rstudio" ] ; then useradd -m $USERNAME ; fi
+RUN useradd -m rstudio
 
 RUN chmod a+x /usr/local/bin/start.sh
 
