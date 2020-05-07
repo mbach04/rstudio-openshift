@@ -10,10 +10,9 @@ metadata:
     description: 
     iconClass: fa fa-bar-chart
     openshift.io/display-name: RStudio
-    openshift.io/documentation-url: https://github.com/CSCfi/rstudio-openshift
-    openshift.io/support-url: https://www.csc.fi/contact-info
+    openshift.io/documentation-url: https://github.com/mbach04/rstudio-openshift
     openshift.io/long-description: 
-    openshift.io/provider-display-name: CSC
+    openshift.io/provider-display-name: Red Hat NAPS SSA Team
     tags: rstudio
     template.openshift.io/bindable: "false"
   name: rstudio
@@ -102,33 +101,34 @@ objects:
       description: Keeps track of changes in the appliation image
     name: ${NAME}
 
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    annotations:
-      description: Keeps track of changes in the appliation image
-    name: alpine-python3
+# - apiVersion: v1
+#   kind: ImageStream
+#   metadata:
+#     annotations:
+#       description: Keeps track of changes in the appliation image
+#     name: python-36
 
-####################
-- apiVersion: v1
-  kind: BuildConfig
-  metadata:
-    name: alpine-python3
-    annotations:
-      description: Defines how to build the application
-      template.alpha.openshift.io/wait-for-ready: "true"
-  spec:
-    source:
-      dockerfile: "FROM alpine:latest \n RUN apk --no-cache add python3"
-    strategy:
-      type: Docker
-    output:
-      to:
-        kind: ImageStreamTag
-        name: alpine-python3:latest
-    triggers:
-      - type: ImageChange
-      - type: ConfigChange
+# - apiVersion: v1
+#   kind: BuildConfig
+#   metadata:
+#     name: python-36
+#     annotations:
+#       description: Defines how to build the application
+#       template.alpha.openshift.io/wait-for-ready: "true"
+#   spec:
+#     imagePullSecrets:
+#       - name: openshift-registry-pull-secret
+#     source:
+#       dockerfile: "FROM quay.io/redhat/ubi7-python36:latest"
+#     strategy:
+#       type: Docker
+#     output:
+#       to:
+#         kind: ImageStreamTag
+#         name: ${NAME}-python-36:latest
+#     triggers:
+#       - type: ImageChange
+#       - type: ConfigChange
 
 - apiVersion: v1
   kind: BuildConfig
@@ -141,8 +141,8 @@ objects:
     source:
       type: Git
       git:
-        uri: https://github.com/CSCfi/rstudio-openshift.git
-        ref: dev
+        uri: https://github.com/mbach04/rstudio-openshift.git
+        ref: master
       contextDir: server
     strategy:
       dockerStrategy:
@@ -153,7 +153,6 @@ objects:
             value: ${PASSWORD}
           - name: "NAME"
             value: ${NAME}
-
     output:
       to:
         kind: ImageStreamTag
@@ -192,7 +191,7 @@ objects:
             - shadowjob
           from:
             kind: ImageStreamTag
-            name: alpine-python3:latest
+            name: ubi7-python36:latest
       - type: ConfigChange
     replicas: 1
     template:
@@ -210,7 +209,7 @@ objects:
             persistentVolumeClaim:
               claimName: ${NAME}-pvc
         initContainers:
-        - image: alpine-python3:latest
+        - image: ubi7-python36:latest
           command: ["/bin/sh","-c","source /tmp/secret-env/secret.env && python3 -c 'import crypt,os; print(crypt.crypt(os.environ[\"PASSWORD\"], crypt.mksalt(crypt.METHOD_SHA512)))' > /tmp/shadow/shadow.crypt"]
           name: shadowjob
           volumeMounts:
@@ -284,4 +283,4 @@ parameters:
   displayName: Application Hostname Suffix
   name: APPLICATION_DOMAIN_SUFFIX
   required: true
-  value: rahtiapp.fi
+  value: apps-crc.testing
