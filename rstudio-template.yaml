@@ -233,10 +233,10 @@ objects:
               timeoutSeconds: 15
             resources:
               limits:
-                cpu: '1'
+                cpu: '2'
                 memory: 4Gi
               requests:
-                cpu: 500m
+                cpu: 1
                 memory: 1Gi
             env:
             - name: SHINY_APPS_PATH
